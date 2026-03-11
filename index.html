@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech & Trade - Requerimientos Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root { --primary: #1a252f; --secondary: #16a085; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); color: #333; }
+        header { background-color: var(--primary); color: white; padding: 25px; text-align: center; border-bottom: 5px solid var(--secondary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: 30px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .info-header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; margin-bottom: 25px; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 1.1em; }
+        .hint { color: #7f8c8d; font-style: italic; font-size: 0.9em; margin-bottom: 10px; display: block; line-height: 1.4; }
+        select, button { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+        
+        /* Estilo para los cuadros de texto */
+        textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 6px; 
+            border: 1px solid #ccc; 
+            font-size: 14px; 
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            box-sizing: border-box;
+        }
+        textarea:focus { border-color: var(--secondary); outline: none; box-shadow: 0 0 5px rgba(22, 160, 133, 0.2); }
+
+        button { background-color: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; text-transform: uppercase; transition: 0.3s; }
+        button:hover { background-color: #12876f; letter-spacing: 1px; }
+        .q-card { background: #f9f9f9; padding: 20px; border-left: 5px solid var(--secondary); margin-bottom: 15px; border-radius: 4px; border: 1px solid #eee; }
+        h3 { color: var(--secondary); border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 style="margin:0; letter-spacing: 3px;">TECH & TRADE</h1>
+    <p style="margin:5px 0 0 0; opacity: 0.9; font-weight: 300;">Levantamiento Técnico de Requerimientos | Jonathan Salgado</p>
+</header>
+
+<div class="container">
+    <div class="info-header">
+        <h2 style="margin:0; color: var(--primary);">Formulario de Proyecto</h2>
+        <span id="fecha" style="font-weight: bold; color: var(--secondary);"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Selecciona el Ámbito Específico:</label>
+        <select id="sector" onchange="mostrarPreguntas()">
+            <option value="general">General / Corporativo</option>
+            <option value="restaurante">Restaurantes y Servicios de Comida</option>
+            <option value="medico">Médico, Clínicas y Salud</option>
+            <option value="retail">Retail, Tiendas y Punto de Venta</option>
+            <option value="autoservicio">Servicios Técnicos / Talleres</option>
+        </select>
+    </div>
+
+    <div id="listaPreguntas"></div>
+
+    <button id="btnPDF" onclick="generarPDF()">Generar PDF con Respuestas</button>
+</div>
+
+<script>
+    document.getElementById('fecha').innerText = "Fecha: " + new Date().toLocaleDateString();
+
+    const bancoPreguntas = {
+        general: [
+            { id: "gen_1", q: "Objetivo principal y 'Dolor' actual", h: "(Ej: El sistema actual es lento, queremos digitalizar las ventas...)" },
+            { id: "gen_2", q: "Usuarios y Roles de Acceso", h: "(Ej: Administrador, Cajero, Cliente...)" },
+            { id: "gen_3", q: "Infraestructura Técnica Existente", h: "(Ej: Dell OptiPlex, Nube, laptops Latitude...)" },
+            { id: "gen_4", q: "Presupuesto y Plazos esperados", h: "(Ej: Fecha límite MVP, presupuesto estimado...)" }
+        ],
+        restaurante: [
+            { id: "res_1", q: "Flujo de Pedidos y Comandas", h: "(Ej: Tablet mesero, impresión cocina, monitor KDS...)" },
+            { id: "res_2", q: "Gestión de Menú y Disponibilidad", h: "(Ej: Cambios de precios, combos, platillo agotado...)" },
+            { id: "res_3", q: "Control de Mesas y Reservas", h: "(Ej: Mapa visual, reservaciones vía web...)" },
+            { id: "res_4", q: "Integración con Delivery", h: "(Ej: UberEats, Rappi, repartidores propios...)" }
+        ],
+        medico: [
+            { id: "med_1", q: "Configuración de Expediente Clínico", h: "(Ej: Antecedentes, alergias, carga de PDFs...)" },
+            { id: "med_2", q: "Agenda y Telemedicina", h: "(Ej: Calendario, recordatorios WhatsApp...)" },
+            { id: "med_3", q: "Recetario y Farmacia", h: "(Ej: Generación de recetas QR, firma digital...)" }
+        ],
+        retail: [
+            { id: "ret_1", q: "Gestión de Inventario y Etiquetas", h: "(Ej: Códigos de barras/QR, stock mínimo...)" },
+            { id: "ret_2", q: "Punto de Venta (POS) y Pagos", h: "(Ej: Tarjeta, QR, facturación automática...)" },
+            { id: "ret_3", q: "Lealtad y Clientes", h: "(Ej: Puntos, descuentos volumen, mailing...)" }
+        ],
+        autoservicio: [
+            { id: "aut_1", q: "Seguimiento de Orden de Servicio", h: "(Ej: Estatus del trabajo, fotos de evidencia...)" },
+            { id: "aut_2", q: "Cotizaciones y Autorizaciones", h: "(Ej: Envío de cotización PDF, clic para aceptar...)" }
+        ]
+    };
+
+    function mostrarPreguntas() {
+        const sector = document.getElementById('sector').value;
+        const contenedor = document.getElementById('listaPreguntas');
+        contenedor.innerHTML = "<h3>Responde a las preguntas:</h3>";
+        
+        const preguntas = [...bancoPreguntas.general, ...(sector !== 'general' ? bancoPreguntas[sector] : [])];
+        
+        preguntas.forEach(item => {
+            contenedor.innerHTML += `
+                <div class="q-card">
+                    <label>${item.q}</label>
+                    <span class="hint"><strong>Sugerencia:</strong> ${item.h}</span>
+                    <textarea id="input_${item.id}" placeholder="Escribe aquí la respuesta..."></textarea>
+                </div>
+            `;
+        });
+    }
+
+    async function generarPDF() {
+        const btn = document.getElementById('btnPDF');
+        btn.innerText = "Generando Archivo...";
+        btn.disabled = true;
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 20;
+
+            // Encabezado
+            doc.setFillColor(26, 37, 47);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont("helvetica", "bold");
+            doc.text("TECH & TRADE", 20, 22);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("Consultor: Jonathan Salgado | Mexicali, B.C.", 20, 32);
+
+            y = 55;
+            doc.setTextColor(0);
+            const sector = document.getElementById('sector').value;
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text(`LEVANTAMIENTO: ${sector.toUpperCase()}`, 20, y);
+            y += 12;
+
+            const preguntas = [...bancoPreguntas.general, ...(sector !== 'general' ? bancoPreguntas[sector] : [])];
+
+            preguntas.forEach((item, i) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                
+                // Texto de la Pregunta
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.setTextColor(26, 37, 47);
+                const qLines = doc.splitTextToSize(`${i+1}. ${item.q}`, 170);
+                doc.text(qLines, 20, y);
+                y += (qLines.length * 6);
+
+                // Respuesta del usuario
+                const textoRespuesta = document.getElementById(`input_${item.id}`).value;
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(60, 60, 60);
+
+                if (textoRespuesta.trim() === "") {
+                    doc.setFont("helvetica", "italic");
+                    doc.text("Sin respuesta proporcionada.", 25, y);
+                } else {
+                    const rLines = doc.splitTextToSize(textoRespuesta, 160);
+                    doc.text(rLines, 25, y);
+                    y += (rLines.length * 5);
+                }
+                
+                y += 10; // Espacio entre bloques
+            });
+
+            // Pie de página
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text("Este documento contiene el levantamiento técnico inicial para el proyecto.", 20, 280);
+            doc.text("Tech & Trade - Jonathan Salgado", 20, 285);
+
+            doc.save(`Levantamiento_${sector}_TechTrade.pdf`);
+        } catch (e) {
+            alert("Error en generación: " + e.message);
+        } finally {
+            btn.innerText = "Generar PDF con Respuestas";
+            btn.disabled = false;
+        }
+    }
+
+    // Inicializar
+    mostrarPreguntas();
+</script>
+
+</body>
+</html>
